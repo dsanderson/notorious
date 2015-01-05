@@ -1,6 +1,6 @@
 from flask import Flask
 from flask import request, redirect
-import os
+import os, subprocess, time
 app = Flask(__name__)
 
 PYTHON_PATH = '/home/dsa/Projects/notorious-app/bin/python2'
@@ -44,14 +44,15 @@ def write_note(loc):
         f = open(loc2, 'w')
         f.write(txt)
         f.close()
-        print loc, path
+        print loc, loc2, path
         return redirect('/read/'+loc)
 
 
 def write_note_input_page(loc):
     txt = read_note_raw(loc)
+    path, fname = os.path.split(loc)
     page_header = """<!DOCTYPE html>\n<html>\n<body>\n<textarea rows="40" cols="80" name="note" form="note_form">\n"""
-    page_footer = """</textarea>\n<p>\n<form action="""+loc+""" method="POST" id="note_form">\n
+    page_footer = """</textarea>\n<p>\n<form action="""+fname+""" method="POST" id="note_form">\n
     <input type="submit" value="Write Note">\n</form>\n</body>\n</html>"""
     page = page_header+txt+page_footer
     return page
@@ -60,10 +61,13 @@ def write_note_input_page(loc):
 ##stuff for executing notes
 @app.route("/run/<path:loc>", methods=['GET'])
 def run_note(loc):
-    command = [PYTHON_PATH, loc]
+    command = [PYTHON_PATH, os.path.join(ROOT_DIR, loc)]
     txt = subprocess.check_output(command)
     #placeholder, will use templates in future
-    return txt
+    if txt == None:
+        return "No output from script"
+    else:
+        return txt
 
 if __name__ == "__main__":
     app.debug = True
